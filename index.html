@@ -3,41 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panda Chat</title>
+    <title>Panda Line V2</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; }
+        body { background-color: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        .header { background-color: #1e1e1e; padding: 15px; text-align: center; border-bottom: 1px solid #333; font-weight: bold; font-size: 1.2rem; }
+        /* Login Screen */
+        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #121212; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+        #login-screen h2 { margin-bottom: 20px; color: #0b93f6; }
+        #login-screen input { width: 100%; max-width: 300px; padding: 15px; border-radius: 20px; border: none; background: #2c2c2e; color: white; font-size: 1.1rem; text-align: center; margin-bottom: 15px; outline: none; }
+        #login-screen button { width: 100%; max-width: 300px; background-color: #0b93f6; color: white; border: none; padding: 15px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+        
+        /* App Layout */
+        #app { display: none; flex-direction: column; height: 100%; }
+        .header { background-color: #1e1e1e; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; font-weight: bold; }
+        .erase-btn { background-color: #ff3b30; color: white; border: none; padding: 8px 15px; border-radius: 15px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+        
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         
-        .message { max-width: 75%; padding: 10px 15px; border-radius: 20px; font-size: 1rem; line-height: 1.4; word-wrap: break-word; }
-        .message.sent { background-color: #0b93f6; color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
-        .message.received { background-color: #2c2c2e; color: white; align-self: flex-start; border-bottom-left-radius: 5px; }
+        /* Messages */
+        .message-wrapper { display: flex; flex-direction: column; max-width: 75%; }
+        .message-wrapper.sent { align-self: flex-end; align-items: flex-end; }
+        .message-wrapper.received { align-self: flex-start; align-items: flex-start; }
+        .sender-name { font-size: 0.75rem; color: #888; margin-bottom: 2px; margin-left: 5px; margin-right: 5px; }
+        
+        .message { padding: 10px 15px; border-radius: 20px; font-size: 1rem; line-height: 1.4; word-wrap: break-word; cursor: pointer; }
+        .message-wrapper.sent .message { background-color: #0b93f6; color: white; border-bottom-right-radius: 5px; }
+        .message-wrapper.received .message { background-color: #2c2c2e; color: white; border-bottom-left-radius: 5px; }
+        .delete-hint { font-size: 0.7rem; color: #ff3b30; margin-top: 2px; display: none; }
         
         .input-area { background-color: #1e1e1e; padding: 10px 15px; display: flex; gap: 10px; border-top: 1px solid #333; align-items: center; }
-        input[type="text"] { flex: 1; padding: 12px; border-radius: 20px; border: none; background-color: #2c2c2e; color: white; font-size: 1rem; outline: none; }
-        button { background-color: #0b93f6; color: white; border: none; padding: 12px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        #message-input { flex: 1; padding: 12px; border-radius: 20px; border: none; background-color: #2c2c2e; color: white; font-size: 1rem; outline: none; }
+        #send-btn { background-color: #0b93f6; color: white; border: none; padding: 12px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="header">Secure Chat - Panda Line</div>
-
-    <div class="chat-container" id="chat-box">
-        </div>
-
-    <div class="input-area">
-        <input type="text" id="message-input" placeholder="Type a message... (Emojis work!)">
-        <button id="send-btn">Send</button>
+    <div id="login-screen">
+        <h2>Secure Login</h2>
+        <input type="text" id="username-input" placeholder="Enter your name...">
+        <button id="login-btn">Enter Chat</button>
     </div>
 
-    <script type="module">
-        // Import Firebase core and Firestore database
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    <div id="app">
+        <div class="header">
+            <span>Secure Chat</span>
+            <button class="erase-btn" id="erase-btn">Erase All</button>
+        </div>
 
-        // Your exact Firebase keys
+        <div class="chat-container" id="chat-box"></div>
+
+        <div class="input-area">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <audio id="notify-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        // YOUR FIREBASE KEYS
         const firebaseConfig = {
             apiKey: "AIzaSyAi1KZ89UZmut2d7DIi2YiWxQFDQdEpjR8",
             authDomain: "pvtcht-panda.firebaseapp.com",
@@ -47,69 +75,127 @@
             appId: "1:755859453943:web:808c5a2ecd754a947ca0f2"
         };
 
-        // Initialize App and Database
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Grab the elements from the screen
+        // UI Elements
+        const loginScreen = document.getElementById("login-screen");
+        const appScreen = document.getElementById("app");
+        const loginBtn = document.getElementById("login-btn");
+        const usernameInput = document.getElementById("username-input");
         const chatBox = document.getElementById("chat-box");
         const messageInput = document.getElementById("message-input");
         const sendBtn = document.getElementById("send-btn");
+        const eraseBtn = document.getElementById("erase-btn");
+        const notifySound = document.getElementById("notify-sound");
 
-        // Create a temporary ID so the app knows which messages are yours
         let myUserId = localStorage.getItem("myUserId");
         if (!myUserId) {
             myUserId = "user_" + Math.random().toString(36).substr(2, 9);
             localStorage.setItem("myUserId", myUserId);
         }
+        
+        let userName = localStorage.getItem("userName");
 
-        // 1. LISTEN FOR NEW MESSAGES (Live Sync)
-        const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
-        onSnapshot(q, (snapshot) => {
-            chatBox.innerHTML = ""; // Clear box before re-drawing
-            
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const messageElement = document.createElement("div");
-                
-                // If I sent it, make it blue on the right. Otherwise, gray on the left.
-                if (data.senderId === myUserId) {
-                    messageElement.className = "message sent";
-                } else {
-                    messageElement.className = "message received";
-                }
-                
-                messageElement.textContent = data.text;
-                chatBox.appendChild(messageElement);
-            });
-            
-            // Auto-scroll to the newest message
-            chatBox.scrollTop = chatBox.scrollHeight; 
+        // LOGIN LOGIC
+        if (userName) {
+            startApp();
+        }
+
+        loginBtn.addEventListener("click", () => {
+            const name = usernameInput.value.trim();
+            if (name !== "") {
+                userName = name;
+                localStorage.setItem("userName", userName);
+                startApp();
+            }
         });
 
-        // 2. SEND A MESSAGE
+        function startApp() {
+            loginScreen.style.display = "none";
+            appScreen.style.display = "flex";
+            listenForMessages();
+        }
+
+        let initialLoad = true;
+
+        // LISTEN FOR MESSAGES
+        function listenForMessages() {
+            const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+            onSnapshot(q, (snapshot) => {
+                chatBox.innerHTML = ""; 
+                
+                snapshot.forEach((document) => {
+                    const data = document.data();
+                    const docId = document.id;
+                    const wrapper = document.createElement("div");
+                    
+                    const isMe = data.senderId === myUserId;
+                    wrapper.className = isMe ? "message-wrapper sent" : "message-wrapper received";
+                    
+                    wrapper.innerHTML = `
+                        <div class="sender-name">${data.name || "Unknown"}</div>
+                        <div class="message">${data.text}</div>
+                        ${isMe ? '<div class="delete-hint">Tap to delete</div>' : ''}
+                    `;
+
+                    // Single Message Deletion (Only your own messages)
+                    if (isMe) {
+                        const msgBubble = wrapper.querySelector(".message");
+                        msgBubble.addEventListener("click", async () => {
+                            if(confirm("Delete this message?")) {
+                                await deleteDoc(doc(db, "messages", docId));
+                            }
+                        });
+                    }
+
+                    chatBox.appendChild(wrapper);
+                });
+                
+                // Play sound if a new message arrives and it's not from me
+                if (!initialLoad && snapshot.docChanges().length > 0) {
+                    const change = snapshot.docChanges()[snapshot.docChanges().length - 1];
+                    if (change.type === "added" && change.doc.data().senderId !== myUserId) {
+                        notifySound.play().catch(e => console.log("Audio play blocked by browser"));
+                    }
+                }
+                
+                chatBox.scrollTop = chatBox.scrollHeight; 
+                initialLoad = false;
+            });
+        }
+
+        // SEND MESSAGE
         async function sendMessage() {
             const text = messageInput.value.trim();
             if (text === "") return;
-
-            messageInput.value = ""; // Clear input immediately so it feels fast
+            messageInput.value = ""; 
 
             try {
                 await addDoc(collection(db, "messages"), {
                     text: text,
                     senderId: myUserId,
+                    name: userName,
                     timestamp: serverTimestamp()
                 });
             } catch (error) {
-                console.error("Error sending message: ", error);
-                alert("Message failed to send. Check the console.");
+                console.error("Error: ", error);
             }
         }
 
-        // Trigger send when clicking the button or pressing Enter
         sendBtn.addEventListener("click", sendMessage);
         messageInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") sendMessage();
+        });
+
+        // FULL ERASE (Panic Button)
+        eraseBtn.addEventListener("click", async () => {
+            if (confirm("WARNING: This will permanently delete ALL messages for both users. Continue?")) {
+                const querySnapshot = await getDocs(collection(db, "messages"));
+                querySnapshot.forEach((document) => {
+                    deleteDoc(doc(db, "messages", document.id));
+                });
+            }
         });
     </script>
 </body>
