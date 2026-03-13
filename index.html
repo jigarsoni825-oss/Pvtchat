@@ -3,57 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Private Connect</title>
+    <title>IG Direct</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #000000; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Utility */
+        body { background-color: #000000; color: #fafafa; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
         
         /* Login Screen */
-        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #121212; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
-        #login-screen h2 { margin-bottom: 25px; color: #0b93f6; font-size: 1.8rem; }
-        #login-screen input { width: 100%; max-width: 320px; padding: 16px; border-radius: 25px; border: none; background: #262626; color: white; font-size: 1.1rem; text-align: center; margin-bottom: 15px; outline: none; }
-        #login-screen button { width: 100%; max-width: 320px; background-color: #0b93f6; color: white; border: none; padding: 16px; border-radius: 25px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+        #login-screen h2 { margin-bottom: 20px; font-style: italic; font-size: 2.5rem; font-weight: 600; }
+        #login-screen input { width: 100%; max-width: 300px; padding: 14px; border-radius: 5px; border: 1px solid #363636; background: #121212; color: white; margin-bottom: 15px; outline: none; }
+        #login-screen button { width: 100%; max-width: 300px; background-color: #0095f6; color: white; border: none; padding: 14px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         
-        /* Contacts List Screen */
-        #contacts-screen { flex-direction: column; height: 100%; background: #000000; }
-        .app-header { background-color: #121212; padding: 20px; font-size: 1.4rem; font-weight: bold; border-bottom: 1px solid #262626; display: flex; justify-content: space-between; align-items: center; }
-        .my-profile-name { font-size: 0.9rem; color: #888; font-weight: normal; }
-        #user-list { flex: 1; overflow-y: auto; padding: 10px; }
+        /* Header */
+        .header { background-color: #000000; padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid #262626; z-index: 10; }
+        .back-btn { background: none; border: none; color: #fafafa; font-size: 1.5rem; cursor: pointer; margin-right: 15px; display: flex; align-items: center; }
+        .header-title { font-size: 1.1rem; font-weight: 600; flex: 1; }
         
-        .contact-card { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #1e1e1e; cursor: pointer; border-radius: 10px; }
-        .avatar { width: 50px; height: 50px; background: linear-gradient(45deg, #0b93f6, #005bb5); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; margin-right: 15px; position: relative; }
-        .online-dot { width: 14px; height: 14px; background-color: #34C759; border: 3px solid #000; border-radius: 50%; position: absolute; bottom: 0; right: 0; }
-        .offline-dot { background-color: #8e8e93; }
+        /* Contacts Screen */
+        #contacts-screen { flex-direction: column; height: 100%; }
+        #user-list { flex: 1; overflow-y: auto; padding-top: 10px; }
+        .contact-card { display: flex; align-items: center; padding: 10px 20px; cursor: pointer; }
+        .contact-card:active { background: #121212; }
+        .avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); padding: 2px; margin-right: 15px; position: relative; }
+        .avatar-inner { width: 100%; height: 100%; background-color: #262626; border-radius: 50%; border: 2px solid #000; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; }
+        .online-dot { width: 16px; height: 16px; background-color: #78de45; border: 3px solid #000; border-radius: 50%; position: absolute; bottom: 0; right: 0; }
         .contact-info { flex: 1; }
-        .contact-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 3px; }
-        .contact-status-text { font-size: 0.85rem; color: #8e8e93; }
+        .contact-name { font-size: 1rem; font-weight: 400; }
+        .contact-status { font-size: 0.85rem; color: #8e8e93; margin-top: 2px; }
 
         /* Chat Screen */
-        #chat-screen { flex-direction: column; height: 100%; background: #000000; }
-        .chat-header { background-color: #121212; padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #262626; z-index: 10; }
-        .back-btn { background: none; border: none; color: #0b93f6; font-size: 1.1rem; font-weight: bold; cursor: pointer; padding: 5px 15px 5px 0; display: flex; align-items: center; }
-        .chat-header-info { flex: 1; display: flex; flex-direction: column; }
-        .chat-header-name { font-size: 1.1rem; font-weight: bold; }
-        .chat-header-status { font-size: 0.8rem; color: #34C759; }
-        
-        .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        
-        /* Messages */
-        .message-wrapper { display: flex; flex-direction: column; max-width: 80%; }
-        .message-wrapper.sent { align-self: flex-end; align-items: flex-end; }
-        .message-wrapper.received { align-self: flex-start; align-items: flex-start; }
-        .message { padding: 12px 16px; border-radius: 20px; font-size: 1.05rem; line-height: 1.4; word-wrap: break-word; }
-        .message-wrapper.sent .message { background-color: #0b93f6; color: white; border-bottom-right-radius: 4px; }
+        #chat-screen { flex-direction: column; height: 100%; }
+        .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        .message-wrapper { display: flex; flex-direction: column; max-width: 75%; margin-bottom: 6px; }
+        .message-wrapper.sent { align-self: flex-end; }
+        .message-wrapper.received { align-self: flex-start; }
+        .message { padding: 10px 14px; border-radius: 22px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; }
+        .message-wrapper.sent .message { background-color: #3797f0; color: white; border-bottom-right-radius: 4px; }
         .message-wrapper.received .message { background-color: #262626; color: white; border-bottom-left-radius: 4px; }
         
         /* Input Area */
-        .input-area { background-color: #121212; padding: 10px 15px 15px 15px; display: flex; gap: 10px; border-top: 1px solid #262626; align-items: center; }
-        #message-input { flex: 1; padding: 14px 20px; border-radius: 30px; border: 1px solid #333; background-color: #262626; color: white; font-size: 1.05rem; outline: none; }
-        #send-btn { background-color: #0b93f6; color: white; border: none; height: 45px; width: 45px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; }
-        #send-btn svg { width: 20px; height: 20px; fill: white; margin-left: 3px; }
+        .input-area { padding: 10px 15px 20px 15px; display: flex; align-items: center; background: #000; border-top: 1px solid #262626; }
+        .input-box { flex: 1; display: flex; align-items: center; background-color: #262626; border-radius: 24px; padding: 8px 15px; }
+        #message-input { flex: 1; background: transparent; border: none; color: white; font-size: 0.95rem; outline: none; padding: 5px 0; }
+        #send-btn { background: none; border: none; color: #0095f6; font-weight: 600; font-size: 0.95rem; cursor: pointer; padding-left: 10px; }
+        #send-btn:disabled { color: #005084; cursor: default; }
     </style>
 </head>
 <body>
@@ -61,33 +55,29 @@
     <audio id="notify-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
     <div id="login-screen">
-        <h2>Connect Profile</h2>
-        <input type="text" id="username-input" placeholder="Your Display Name...">
-        <button id="login-btn">Continue</button>
+        <h2>Instagram</h2>
+        <input type="text" id="username-input" placeholder="Username" autocomplete="off">
+        <button id="login-btn">Log In</button>
     </div>
 
     <div id="contacts-screen" class="hidden">
-        <div class="app-header">
-            <span>Chats</span>
-            <span class="my-profile-name" id="my-profile-display"></span>
+        <div class="header">
+            <div class="header-title" id="my-username-display">DirectMessages</div>
         </div>
         <div id="user-list"></div>
     </div>
 
     <div id="chat-screen" class="hidden">
-        <div class="chat-header">
-            <button class="back-btn" id="back-btn">‹ Back</button>
-            <div class="chat-header-info">
-                <span class="chat-header-name" id="active-chat-name">Name</span>
-                <span class="chat-header-status" id="active-chat-status">Online</span>
-            </div>
+        <div class="header">
+            <button class="back-btn" id="back-btn">‹</button>
+            <div class="header-title" id="chat-header-name">User</div>
         </div>
         <div class="chat-container" id="chat-box"></div>
         <div class="input-area">
-            <input type="text" id="message-input" placeholder="Message..." autocomplete="off">
-            <button id="send-btn">
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
+            <div class="input-box">
+                <input type="text" id="message-input" placeholder="Message..." autocomplete="off">
+                <button id="send-btn" disabled>Send</button>
+            </div>
         </div>
     </div>
 
@@ -107,125 +97,124 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const screens = { login: document.getElementById("login-screen"), contacts: document.getElementById("contacts-screen"), chat: document.getElementById("chat-screen") };
-        const inputs = { loginName: document.getElementById("username-input"), message: document.getElementById("message-input") };
-        const buttons = { login: document.getElementById("login-btn"), back: document.getElementById("back-btn"), send: document.getElementById("send-btn") };
-        const displays = { myProfileName: document.getElementById("my-profile-display"), userList: document.getElementById("user-list"), chatBox: document.getElementById("chat-box"), chatName: document.getElementById("active-chat-name"), chatStatus: document.getElementById("active-chat-status") };
-        const notifySound = document.getElementById("notify-sound");
+        // Core Variables
+        let myUserId = localStorage.getItem("igCloneUid");
+        if (!myUserId) { myUserId = "uid_" + Date.now(); localStorage.setItem("igCloneUid", myUserId); }
+        let myName = localStorage.getItem("igCloneName"); // Persistent memory check
+        let activeRoom = null;
+        let unsubscribeChat = null;
 
-        let myUserId = localStorage.getItem("myUid");
-        if (!myUserId) { myUserId = "user_" + Date.now(); localStorage.setItem("myUid", myUserId); }
-        let myName = localStorage.getItem("myName");
-        let activeRoomId = null;
-        let activePartnerId = null;
-        let msgListenerUnsubscribe = null;
-        let usersData = {}; 
+        const ui = {
+            screens: { login: document.getElementById("login-screen"), contacts: document.getElementById("contacts-screen"), chat: document.getElementById("chat-screen") },
+            inputs: { name: document.getElementById("username-input"), msg: document.getElementById("message-input") },
+            buttons: { login: document.getElementById("login-btn"), back: document.getElementById("back-btn"), send: document.getElementById("send-btn") },
+            displays: { myName: document.getElementById("my-username-display"), userList: document.getElementById("user-list"), chatBox: document.getElementById("chat-box"), chatName: document.getElementById("chat-header-name") },
+            sound: document.getElementById("notify-sound")
+        };
 
-        if (myName) loginUser(myName);
+        // 1. PERSISTENT LOGIN LOGIC
+        if (myName) {
+            // User exists in memory, skip login screen instantly
+            executeLogin(myName);
+        }
 
-        buttons.login.addEventListener("click", () => {
-            const name = inputs.loginName.value.trim();
-            if (name) loginUser(name);
+        ui.buttons.login.addEventListener("click", () => {
+            const name = ui.inputs.name.value.trim();
+            if (name) executeLogin(name);
         });
-        
-        inputs.loginName.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") buttons.login.click();
-        });
 
-        async function loginUser(name) {
+        async function executeLogin(name) {
             myName = name;
-            localStorage.setItem("myName", myName);
-            displays.myProfileName.textContent = myName;
-            await setDoc(doc(db, "users", myUserId), { name: myName, isOnline: true, lastSeen: Date.now() }, { merge: true });
-            switchScreen('contacts');
-            listenToContacts();
-        }
-
-        document.addEventListener("visibilitychange", () => {
-            if(!myName) return;
-            updateDoc(doc(db, "users", myUserId), { isOnline: document.visibilityState === 'visible', lastSeen: Date.now() });
-        });
-
-        function listenToContacts() {
-            onSnapshot(collection(db, "users"), (snapshot) => {
-                displays.userList.innerHTML = "";
-                snapshot.forEach((userDoc) => {
-                    if (userDoc.id === myUserId) return; 
-                    const data = userDoc.data();
-                    usersData[userDoc.id] = data; 
-                    const card = document.createElement("div");
-                    card.className = "contact-card";
-                    const initial = data.name.charAt(0).toUpperCase();
-                    const statusClass = data.isOnline ? "online-dot" : "online-dot offline-dot";
-                    card.innerHTML = `<div class="avatar">${initial}<div class="${statusClass}"></div></div><div class="contact-info"><div class="contact-name">${data.name}</div><div class="contact-status-text">${data.isOnline ? "Online" : "Offline"}</div></div>`;
-                    card.addEventListener("click", () => openChat(userDoc.id, data.name));
-                    displays.userList.appendChild(card);
-                });
-                if(activePartnerId && usersData[activePartnerId]) {
-                    const partner = usersData[activePartnerId];
-                    displays.chatStatus.textContent = partner.isOnline ? "Online" : "Offline";
-                    displays.chatStatus.style.color = partner.isOnline ? "#34C759" : "#8e8e93";
-                }
-            });
-        }
-
-        function openChat(partnerId, partnerName) {
-            activePartnerId = partnerId;
-            displays.chatName.textContent = partnerName;
-            activeRoomId = [myUserId, partnerId].sort().join("_");
-            switchScreen('chat');
-            loadMessages();
-        }
-
-        buttons.back.addEventListener("click", () => {
-            activeRoomId = null; activePartnerId = null;
-            if (msgListenerUnsubscribe) msgListenerUnsubscribe();
-            switchScreen('contacts');
-        });
-
-        function loadMessages() {
-            if (msgListenerUnsubscribe) msgListenerUnsubscribe(); 
-            displays.chatBox.innerHTML = "";
-            let initialLoad = true;
-            const q = query(collection(db, "messages"), where("roomId", "==", activeRoomId), orderBy("time", "asc"));
+            localStorage.setItem("igCloneName", myName); // Save permanently to browser
+            ui.displays.myName.textContent = myName;
             
-            msgListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-                displays.chatBox.innerHTML = "";
+            // Register online status
+            await setDoc(doc(db, "users", myUserId), { name: myName, online: true, lastUpdate: Date.now() }, { merge: true });
+            
+            showScreen('contacts');
+            loadContacts();
+        }
+
+        // Keep status updated
+        document.addEventListener("visibilitychange", () => {
+            if(myName) updateDoc(doc(db, "users", myUserId), { online: document.visibilityState === 'visible' });
+        });
+
+        // 2. CONTACTS LIST
+        function loadContacts() {
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                ui.displays.userList.innerHTML = "";
                 snapshot.forEach(docSnap => {
-                    const msg = { id: docSnap.id, ...docSnap.data() };
-                    const isMe = msg.senderId === myUserId;
-                    const wrapper = document.createElement("div");
-                    wrapper.className = isMe ? "message-wrapper sent" : "message-wrapper received";
-                    wrapper.innerHTML = `<div class="message">${msg.text}</div>`;
-                    if (isMe) wrapper.querySelector(".message").addEventListener("click", async () => {
-                        if(confirm("Delete this message for everyone?")) await deleteDoc(doc(db, "messages", msg.id));
-                    });
-                    displays.chatBox.appendChild(wrapper);
+                    if (docSnap.id === myUserId) return;
+                    const data = docSnap.data();
+                    const initial = data.name.charAt(0).toUpperCase();
+                    const dot = data.online ? '<div class="online-dot"></div>' : '';
+                    const statusTxt = data.online ? "Active now" : "Offline";
+                    
+                    const div = document.createElement("div");
+                    div.className = "contact-card";
+                    div.innerHTML = `
+                        <div class="avatar"><div class="avatar-inner">${initial}</div>${dot}</div>
+                        <div class="contact-info">
+                            <div class="contact-name">${data.name}</div>
+                            <div class="contact-status">${statusTxt}</div>
+                        </div>`;
+                    div.onclick = () => openChat(docSnap.id, data.name);
+                    ui.displays.userList.appendChild(div);
                 });
-                if (!initialLoad && snapshot.docChanges().length > 0) {
-                    const change = snapshot.docChanges()[snapshot.docChanges().length - 1];
-                    if (change.type === "added" && change.doc.data().senderId !== myUserId) notifySound.play().catch(e => console.log("Sound blocked"));
-                }
-                displays.chatBox.scrollTop = displays.chatBox.scrollHeight;
-                initialLoad = false;
             });
         }
 
-        async function sendMessage() {
-            const text = inputs.message.value.trim();
-            if (!text || !activeRoomId) return;
-            inputs.message.value = ""; 
-            try { await addDoc(collection(db, "messages"), { roomId: activeRoomId, text: text, senderId: myUserId, time: Date.now() }); } 
-            catch (error) { console.error("Failed to send:", error); }
+        // 3. CHAT ROOM
+        function openChat(partnerId, partnerName) {
+            ui.displays.chatName.textContent = partnerName;
+            activeRoom = [myUserId, partnerId].sort().join("_");
+            showScreen('chat');
+            
+            if (unsubscribeChat) unsubscribeChat();
+            
+            let firstLoad = true;
+            unsubscribeChat = onSnapshot(query(collection(db, "messages"), where("room", "==", activeRoom), orderBy("time", "asc")), (snapshot) => {
+                ui.displays.chatBox.innerHTML = "";
+                snapshot.forEach(msgDoc => {
+                    const msg = msgDoc.data();
+                    const isMe = msg.sender === myUserId;
+                    const wrap = document.createElement("div");
+                    wrap.className = `message-wrapper ${isMe ? 'sent' : 'received'}`;
+                    wrap.innerHTML = `<div class="message">${msg.text}</div>`;
+                    
+                    if (isMe) wrap.onclick = () => { if(confirm("Unsend message?")) deleteDoc(doc(db, "messages", msgDoc.id)); };
+                    ui.displays.chatBox.appendChild(wrap);
+                });
+
+                if (!firstLoad && snapshot.docChanges().some(c => c.type === "added" && c.doc.data().sender !== myUserId)) {
+                    ui.sound.play().catch(e=>console.log("Audio blocked"));
+                }
+                ui.displays.chatBox.scrollTop = ui.displays.chatBox.scrollHeight;
+                firstLoad = false;
+            });
         }
 
-        buttons.send.addEventListener("click", sendMessage);
-        inputs.message.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+        ui.buttons.back.onclick = () => { activeRoom = null; showScreen('contacts'); };
 
-        function switchScreen(screenName) {
-            Object.values(screens).forEach(s => s.classList.add("hidden"));
-            screens[screenName].classList.remove("hidden");
-            screens[screenName].style.display = "flex";
+        // 4. SENDING
+        ui.inputs.msg.oninput = () => { ui.buttons.send.disabled = ui.inputs.msg.value.trim() === ""; };
+        
+        async function sendMsg() {
+            const text = ui.inputs.msg.value.trim();
+            if (!text || !activeRoom) return;
+            ui.inputs.msg.value = "";
+            ui.buttons.send.disabled = true;
+            await addDoc(collection(db, "messages"), { room: activeRoom, text: text, sender: myUserId, time: Date.now() });
+        }
+        
+        ui.buttons.send.onclick = sendMsg;
+        ui.inputs.msg.onkeypress = (e) => { if (e.key === "Enter") sendMsg(); };
+
+        function showScreen(name) {
+            Object.values(ui.screens).forEach(s => s.classList.add("hidden"));
+            ui.screens[name].classList.remove("hidden");
+            ui.screens[name].style.display = "flex";
         }
     </script>
 </body>
