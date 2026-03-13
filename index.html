@@ -32,10 +32,18 @@
         /* Chat System (Users) */
         .chat-header { background-color: #121212; padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #262626; }
         .back-btn { background: none; border: none; color: #0b93f6; font-size: 1.5rem; cursor: pointer; margin-right: 15px; }
+        .chat-header-info { flex: 1; display: flex; flex-direction: column; }
+        .chat-header-name { font-size: 1.1rem; font-weight: bold; }
+        .chat-header-status { font-size: 0.8rem; color: #34C759; }
+
         .contact-card { display: flex; align-items: center; padding: 15px; cursor: pointer; border-bottom: 1px solid #121212; }
         .contact-card:active { background: #121212; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; background: #0b93f6; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; margin-right: 15px; }
-        .contact-name { font-size: 1.1rem; font-weight: 600; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: #0b93f6; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; margin-right: 15px; position: relative; }
+        .online-dot { width: 14px; height: 14px; background-color: #34C759; border: 3px solid #000; border-radius: 50%; position: absolute; bottom: 0; right: 0; }
+        .offline-dot { background-color: #8e8e93; }
+        .contact-info { flex: 1; }
+        .contact-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 3px; }
+        .contact-status-text { font-size: 0.85rem; color: #8e8e93; }
         
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         .message-wrapper { display: flex; flex-direction: column; max-width: 80%; }
@@ -46,11 +54,13 @@
         .message-wrapper.received .message { background-color: #262626; color: white; border-bottom-left-radius: 4px; }
         
         .input-area { padding: 10px 15px 15px 15px; display: flex; align-items: center; background: #121212; border-top: 1px solid #262626; }
-        #message-input { flex: 1; margin-bottom: 0; border-radius: 20px; border: none; padding: 12px 15px; background: #262626; }
+        #message-input { flex: 1; margin-bottom: 0; border-radius: 20px; border: none; padding: 12px 15px; background: #262626; color: white; outline: none;}
         #send-btn { background: #0b93f6; border: none; color: white; font-weight: bold; padding: 12px 20px; border-radius: 20px; margin-left: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
+
+    <audio id="notify-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
     <div id="gateway-screen" class="screen center-screen">
         <h1 class="jarvis-title">JARVIS</h1>
@@ -78,8 +88,7 @@
             <input type="text" id="new-password" placeholder="Set Password">
             <button class="primary-btn" id="btn-create-user">Create Account</button>
         </div>
-        <div class="user-list-admin" id="admin-user-list">
-            </div>
+        <div class="user-list-admin" id="admin-user-list"></div>
     </div>
 
     <div id="user-login-screen" class="screen center-screen hidden">
@@ -102,18 +111,21 @@
     <div id="chat-screen" class="screen hidden">
         <div class="chat-header">
             <button class="back-btn" onclick="nav('contacts-screen')">‹</button>
-            <div id="chat-partner-name" style="font-size: 1.2rem; font-weight: bold;">Name</div>
+            <div class="chat-header-info">
+                <span class="chat-header-name" id="chat-partner-name">Name</span>
+                <span class="chat-header-status" id="chat-partner-status">Offline</span>
+            </div>
         </div>
         <div class="chat-container" id="chat-box"></div>
         <div class="input-area">
-            <input type="text" id="message-input" placeholder="Type a message...">
+            <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
             <button id="send-btn">Send</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, doc, setDoc, getDoc, getDocs, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, doc, setDoc, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAi1KZ89UZmut2d7DIi2YiWxQFDQdEpjR8",
@@ -127,25 +139,34 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Global Navigation function (attached to window so HTML buttons can use it)
+        // Global Navigation
         window.nav = function(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
         };
 
-        // Variables
         let myUsername = localStorage.getItem("jarvisUser");
         let activeRoom = null;
+        let activePartner = null;
         let chatSub = null;
+        let allUsersData = {};
 
-        // Auto-login check
+        // 1. AUTO-LOGIN & PRESENCE
         if (myUsername) {
             document.getElementById("my-display-name").textContent = myUsername;
+            updateDoc(doc(db, "auth_users", myUsername), { isOnline: true });
             nav("contacts-screen");
             loadContacts();
         }
 
-        // --- ADMIN LOGIC ---
+        // Toggle online status when app is minimized
+        document.addEventListener("visibilitychange", () => {
+            if(myUsername) {
+                updateDoc(doc(db, "auth_users", myUsername), { isOnline: document.visibilityState === 'visible' });
+            }
+        });
+
+        // 2. ADMIN PORTAL LOGIC
         document.getElementById("btn-admin-login").onclick = () => {
             const user = document.getElementById("admin-user").value.trim();
             const pass = document.getElementById("admin-pass").value.trim();
@@ -164,11 +185,10 @@
             const pass = document.getElementById("new-password").value.trim();
             if (!uname || !pass) return alert("Fill both fields.");
             
-            // Save to Firestore 'auth_users' collection
-            await setDoc(doc(db, "auth_users", uname), { username: uname, password: pass });
+            await setDoc(doc(db, "auth_users", uname), { username: uname, password: pass, isOnline: false });
             document.getElementById("new-username").value = "";
             document.getElementById("new-password").value = "";
-            alert(`User ${uname} created successfully!`);
+            alert(`User ${uname} created!`);
         };
 
         function loadAdminUsers() {
@@ -180,10 +200,7 @@
                     const div = document.createElement("div");
                     div.className = "admin-user-card";
                     div.innerHTML = `
-                        <div>
-                            <strong>${data.username}</strong><br>
-                            <span style="font-size:0.8rem; color:#888;">Pass: ${data.password}</span>
-                        </div>
+                        <div><strong>${data.username}</strong><br><span style="font-size:0.8rem; color:#888;">Pass: ${data.password}</span></div>
                         <button class="delete-btn">Delete</button>
                     `;
                     div.querySelector(".delete-btn").onclick = () => {
@@ -194,7 +211,7 @@
             });
         }
 
-        // --- USER LOGIC ---
+        // 3. USER LOGIC
         document.getElementById("btn-user-login").onclick = async () => {
             const uname = document.getElementById("login-username").value.trim();
             const pass = document.getElementById("login-password").value.trim();
@@ -205,6 +222,7 @@
                 myUsername = uname;
                 localStorage.setItem("jarvisUser", myUsername);
                 document.getElementById("my-display-name").textContent = myUsername;
+                await updateDoc(doc(db, "auth_users", myUsername), { isOnline: true });
                 nav("contacts-screen");
                 loadContacts();
             } else {
@@ -212,63 +230,97 @@
             }
         };
 
-        window.logoutUser = function() {
+        window.logoutUser = async function() {
+            if(myUsername) await updateDoc(doc(db, "auth_users", myUsername), { isOnline: false });
             localStorage.removeItem("jarvisUser");
             myUsername = null;
             nav("gateway-screen");
         };
 
-        // --- CHAT SYSTEM ---
+        // 4. CONTACTS & ONLINE STATUS
         function loadContacts() {
             onSnapshot(collection(db, "auth_users"), (snapshot) => {
                 const list = document.getElementById("user-contact-list");
                 list.innerHTML = "";
                 snapshot.forEach(docSnap => {
-                    if (docSnap.id === myUsername) return; // Don't show myself
-                    
                     const data = docSnap.data();
+                    allUsersData[data.username] = data; // Save for header updates
+
+                    if (docSnap.id === myUsername) return; // Hide myself
+                    
                     const initial = data.username.charAt(0).toUpperCase();
+                    const statusClass = data.isOnline ? "online-dot" : "online-dot offline-dot";
+                    const statusText = data.isOnline ? "Online" : "Offline";
+                    
                     const div = document.createElement("div");
                     div.className = "contact-card";
                     div.innerHTML = `
-                        <div class="avatar">${initial}</div>
-                        <div class="contact-name">${data.username}</div>
+                        <div class="avatar">${initial}<div class="${statusClass}"></div></div>
+                        <div class="contact-info">
+                            <div class="contact-name">${data.username}</div>
+                            <div class="contact-status-text">${statusText}</div>
+                        </div>
                     `;
                     div.onclick = () => openChatRoom(data.username);
                     list.appendChild(div);
                 });
+
+                // Live update the chat header if a room is open
+                if (activePartner && allUsersData[activePartner]) {
+                    const partner = allUsersData[activePartner];
+                    const statusEl = document.getElementById("chat-partner-status");
+                    statusEl.textContent = partner.isOnline ? "Online" : "Offline";
+                    statusEl.style.color = partner.isOnline ? "#34C759" : "#8e8e93";
+                }
             });
         }
 
+        // 5. LIVE CHAT SYSTEM
         function openChatRoom(partnerName) {
+            activePartner = partnerName;
             document.getElementById("chat-partner-name").textContent = partnerName;
             activeRoom = [myUsername, partnerName].sort().join("_");
             nav("chat-screen");
 
             if(chatSub) chatSub(); // Stop old listener
             
-            chatSub = onSnapshot(query(collection(db, "messages"), where("room", "==", activeRoom), orderBy("time", "asc")), (snapshot) => {
+            // Bypass Firebase Index Block: Pull messages and sort them locally in the app
+            let initialLoad = true;
+            chatSub = onSnapshot(query(collection(db, "messages"), where("room", "==", activeRoom)), (snapshot) => {
+                let msgs = [];
+                snapshot.forEach(doc => msgs.push(doc.data()));
+                msgs.sort((a, b) => a.time - b.time); // Client-side sort
+                
                 const box = document.getElementById("chat-box");
                 box.innerHTML = "";
-                snapshot.forEach(msgDoc => {
-                    const msg = msgDoc.data();
+                msgs.forEach(msg => {
                     const isMe = msg.sender === myUsername;
                     const wrap = document.createElement("div");
                     wrap.className = `message-wrapper ${isMe ? 'sent' : 'received'}`;
                     wrap.innerHTML = `<div class="message">${msg.text}</div>`;
                     box.appendChild(wrap);
                 });
+
+                // Notification sound logic
+                if (!initialLoad && snapshot.docChanges().length > 0) {
+                    const change = snapshot.docChanges()[snapshot.docChanges().length - 1];
+                    if (change.type === "added" && change.doc.data().sender !== myUsername) {
+                        document.getElementById("notify-sound").play().catch(e => console.log("Sound blocked"));
+                    }
+                }
+                
                 box.scrollTop = box.scrollHeight;
+                initialLoad = false;
             });
         }
 
-        // Send Message
+        // Send Message Logic
         async function sendChatMessage() {
             const input = document.getElementById("message-input");
             const text = input.value.trim();
             if (!text || !activeRoom) return;
             
-            input.value = ""; // Clear instantly
+            input.value = ""; // Clear instantly for speed
             await addDoc(collection(db, "messages"), {
                 room: activeRoom,
                 text: text,
